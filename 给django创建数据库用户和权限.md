@@ -15,3 +15,4 @@
    设置好后，work账户就有了django_bbs数据库所有的权限
    
 4.  查看表字段 `desc post_comment`
+
