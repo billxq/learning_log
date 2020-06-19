@@ -53,17 +53,13 @@
 docker run -d -p 80:80 httpd
 ```
 
-​	得到如下结果：
-
-​	![截屏2020-06-19 下午1.39.52](../assets/截屏2020-06-19 下午1.39.52-2545362.png)
-
 ​	启动流程：
 
-		- docker客户端执行docker run命令
-		- docker daemon发现发现本地没有httpd镜像
-		- docker从docker hub下载httpd镜像
-		- 下载完成，httpd镜像保存到本地
-		- docker daemon启动httpd镜像
+  1. docker客户端执行docker run命令
+  2. docker daemon发现发现本地没有httpd镜像
+  3. docker从docker hub下载httpd镜像
+  4. 下载完成，httpd镜像保存到本地
+  5. docker daemon启动httpd镜像
 
 
 
