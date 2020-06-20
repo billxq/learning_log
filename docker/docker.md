@@ -54,7 +54,7 @@
 
  - 启动流程：
    	- docker客户端执行docker run命令
-   	- docker daemon发现发现本地没有httpd镜像
+      	- docker daemon发现发现本地没有httpd镜像
    	- docker从docker hub下载httpd镜像
    	- 下载完成，httpd镜像保存到本地
    	- docker daemon启动httpd镜像
@@ -136,6 +136,98 @@ CMD ["/bin/bash"]
 - 容器启动时运行bash。
 
 
+
+## 3.2 构建镜像
+
+### 3.2.1 docker commit
+
+- Docker commit 是最直观的创建镜像的方法，包含三个过程。
+
+  1. 运行容器
+  2. 修改容器
+  3. 将容器保存为新镜像
+
+- 小例子
+
+  ```shell
+  docker run -it ubuntu # 开启ubuntu容器
+  apt-get install vim -y # 进入容器后发现没有安装vim，于是安装vim编辑器
+  docker ps # 在新的terminal查看这个容器的NAME值，这里为silly_goldberg
+  docker commit silly_goldberg ubuntu_with_vim # 创建新的docker镜像，名字为ubuntu_with_vim
+  ```
+
+  **这是一种手工创建镜像的方式，容易出错，效率低而且可重复性比较弱。而且这种方法的安全性存在隐患。不太推荐这个方法。**
+
+### 3.2.2 Dockerfile
+
+> Dockerfile是一个文本文件，记录了镜像构建的所有步骤。
+
+- 第一个Dockerfile
+
+  - 用Dockerfile创建上节的ubuntu_with_vim，如下：
+
+  ```shell
+  FROM ubuntu
+  RUN apt-get update -y && apt-get install -y vim
+  ```
+
+  - 切换到Dockerfile所在的目录，运行命令： `docker build -t ubuntu-with-vi-dockerfile .`
+    - -t： 将新的镜像命名为ubuntu-with-vi-dockerfile。
+    - 命令尾部的 "." 指明了build context为当前目录。docker会从build context中寻找Dockerfile文件，我们也可以通过-f参数去指定Dockerfile的位置。
+
+- 查看镜像的分层结构
+
+  docker history命令会显示镜像的构建历史， 也就是dockerfile的执行过程。它也想我们展示的镜像的分层结构，每一层由上至下排列。
+
+- 镜像的缓存特性
+
+  docker会缓存已有镜像的镜像层，构建新镜像时，如果某镜像层已存在，就直接使用，无需重新创建。
+
+- 调试Dockerfile
+
+  总结一下通过Dockerfile创建镜像的过程：
+
+  1. 从base镜像运行一个容器
+  2. 执行一条命令
+  3. 执行类似docker commit的操作，生成一个新的镜像层
+  4. Docker再基于刚刚提交的镜像运行一个新容器
+  5. 重复2-4步，直到Dockerfile中的所有命令执行完毕
+
+  从这个过程可以看出，如果Dockerfile由于某种原因执行到某个命令失败了，我们也将能得到前一个指令成功执行构建出的镜像，这对调试Dockerfile非常有帮助。
+
+- Dockerfile常用指令
+
+  - FROM： 指定base镜像。
+
+  - MAINTAINER： 设置镜像的作者，可以是任意字符串。
+
+  - COPY：将文件从build context复制到镜像。`COPY src dest` 或者 `COPY ['src', 'dest']`src只能指定build context中的文件或目录。
+
+  - ADD：与COPY类似，从build context中复制文件到镜像，不同的是，如果src是归档文件（tar, zip,tgz,xz等），文件会被自动解压到dest。
+
+  - ENV：设置环境变量，环境变量可被后面的指令使用。
+
+  - EXPOSE：指定容器中的进程会监听某个端口，Docker可以讲该端口暴露出来。
+
+  - VOLUME：将文件或者目录生命为volume。
+
+  - RUN：在容器中运行指定的命令。
+
+  - CMD：容器启动时运行指定命令。只有最后一个CMD指令会生效。可以被docker run之后的参数替换掉。
+
+  - ENTRYPOINT：设置容器启动时运行的命令。可以设置多个指令，但只有最后一个生效。
+
+    ```shell
+    FROM busybox
+    MAINTAINER greenfish
+    WORKDIR /testdir
+    RUN touch tmpfile1
+    COPY ['tmmfile2', '.']
+    ADD ["bunch.tar.gz", "."]
+    ENV WELCOME "You are in my container, welcome!"
+    ```
+
+    
 
 
 
