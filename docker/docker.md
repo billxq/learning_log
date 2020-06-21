@@ -55,7 +55,7 @@
  - 启动流程：
    	- docker客户端执行docker run命令
       	- docker daemon发现发现本地没有httpd镜像
-   	- docker从docker hub下载httpd镜像
+      	- docker从docker hub下载httpd镜像
    	- 下载完成，httpd镜像保存到本地
    	- docker daemon启动httpd镜像
 
@@ -228,6 +228,64 @@ CMD ["/bin/bash"]
     ```
 
     
+
+## 3.3  RUN vs CMD vs ENTRYPOINT
+
+这几个指令看上去很相似，但很容易混淆。他们的区别是：
+
+	1. RUN：执行命令并创建新的镜像层，RUN经常用于安装软件包。
+ 	2. CMD：设置容器启动后默认执行的命令及其参数，但CMD能够被docker run后面跟的命令行参数替换。
+ 	3. ENTRYPOINT: 配置容器启动时运行的命令。
+
+### 3.3.1 Shell和Exec格式
+
+- shell格式
+
+  ```shell
+  RUN apt-get install python3
+  CMD echo "hello world"
+  ENTRYPOINT echo "hello world"
+  ```
+
+- exec格式
+
+  ```shell
+  RUN ["apt-get", "install", "python3"]
+  CMD ["/bin/echo", "Hello, world!"]
+  ENTRYPOINT ["/bin/echo", "Hello,world!"]
+  ```
+
+### 3.3.2 RUN
+
+通常用于安装应用和安装包。示例：
+
+```shell
+RUN apt-get update && apt-get install -y vim nginx git
+```
+
+
+
+### 3.3.3 CMD
+
+​	CMD命令运行用户指定容器的默认执行的命令。此命令会在容器启动且docker run没有指定其他命令时运行。
+
+  1. 如果docker run制定了其他命令，CMD指定的默认命令将被忽略。
+
+  2. 如果Dockerfile中有多个CMD指令，只有最后一个CMD有效。
+
+  3. 推荐用exec格式
+
+     ```shell
+     CMD ["executable", "param1", "param2"]
+     ```
+
+     
+
+### 3.3.4 ENTRYPOINT
+
+ENTRYPOINT指令可以让容器以应用或服务的形式运行。如果docker run指定了命令，那么CMD指令会被忽略，而ENTRYPOINT则不会被忽略，一定会执行。推荐用exec格式。
+
+
 
 
 
