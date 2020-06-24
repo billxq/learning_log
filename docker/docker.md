@@ -56,8 +56,8 @@
    	- docker客户端执行docker run命令
       	- docker daemon发现发现本地没有httpd镜像
       	- docker从docker hub下载httpd镜像
-   	- 下载完成，httpd镜像保存到本地
-   	- docker daemon启动httpd镜像
+              	- 下载完成，httpd镜像保存到本地
+         	- docker daemon启动httpd镜像
 
 
 
@@ -284,6 +284,69 @@ RUN apt-get update && apt-get install -y vim nginx git
 ### 3.3.4 ENTRYPOINT
 
 ENTRYPOINT指令可以让容器以应用或服务的形式运行。如果docker run指定了命令，那么CMD指令会被忽略，而ENTRYPOINT则不会被忽略，一定会执行。推荐用exec格式。
+
+
+
+## 3.4 分发镜像
+
+有3种方法：
+
+- 用相同的Dockerfile在其他host构建镜像
+- 将镜像上传到公共Registry（如Docker Hub），Host直接下载使用
+- 搭建私有Registry供本地host使用
+
+
+
+### 3.4.1 为镜像命名
+
+```shell
+格式：docker build -t [repository]:[tag]
+如： docker build -t docker-with-vi:lastest
+```
+
+
+
+### 3.4.2 使用公共Registry
+
+保存和分发镜像的最直接的方法就是使用Docker Hub。
+
+1. 注册Docker Hub。
+
+2. 在Docker Host上登陆。
+
+   ```shell
+   docker login -u username
+   ```
+
+3. 修改镜像的repository，使之与Docker Hub账号匹配。
+
+   ```shell
+   docker tag httpd username/httpd:v1
+   docker push username/httpd:v1
+   ```
+
+### 3.4.3 搭建本地Registry
+
+1. 启动registry容器
+2. 通过docker push上传镜像
+
+
+
+## 3.5 小结
+
+镜像操作子命令：
+
+- images：显示镜像列表
+- history：显示镜像构建历史
+- commit：从容器创建新的镜像
+- build：从Dockerfile构建镜像
+- tag：给镜像打tag
+- pull：从registry下载镜像
+- push：将镜像上传到registry
+- rmi：删除Docker host中的镜像
+- search：搜索Docker Hub中的镜像
+
+
 
 
 
