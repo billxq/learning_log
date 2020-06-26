@@ -2,7 +2,7 @@
 
 
 
-## 1.  安装docker
+# 1.  安装docker
 
 ### 1.1 ubuntu上安装
 
@@ -33,9 +33,9 @@
 
 
 
-## 2.  运行第一个容器
+# 2.  运行第一个容器
 
-### 2.1 首先要配置一个国内的镜像加速
+## 2.1 首先要配置一个国内的镜像加速
 
  - 新建一个文件/etc/docker/daemon.json，内容如下：
 
@@ -57,11 +57,11 @@
       	- docker daemon发现发现本地没有httpd镜像
       	- docker从docker hub下载httpd镜像
               	- 下载完成，httpd镜像保存到本地
-         	- docker daemon启动httpd镜像
+              	- docker daemon启动httpd镜像
 
 
 
-## 3. 镜像内部结构
+# 3. 镜像内部结构
 
 ### 3.1.1 hello-world 最小镜像
 
@@ -233,7 +233,8 @@ CMD ["/bin/bash"]
 
 这几个指令看上去很相似，但很容易混淆。他们的区别是：
 
-	1. RUN：执行命令并创建新的镜像层，RUN经常用于安装软件包。
+1. RUN：执行命令并创建新的镜像层，RUN经常用于安装软件包。
+
  	2. CMD：设置容器启动后默认执行的命令及其参数，但CMD能够被docker run后面跟的命令行参数替换。
  	3. ENTRYPOINT: 配置容器启动时运行的命令。
 
@@ -348,8 +349,132 @@ ENTRYPOINT指令可以让容器以应用或服务的形式运行。如果docker 
 
 
 
+# 4  Docker容器
+
+## 4.1  运行容器
+
+docker run 是启动容器的方法。可以用三种方法指定容器启动时执行的命令：
+
+- CMD指令
+- ENTRYPOINT 指令
+- 在docker run命令行中指定
+
+小例子：
+
+```shell
+docker run ubuntu pwd
+```
+
+这条命令会打开一个ubuntu的容器，然后显示这个容器的工作目录。但是这个命令执行完后，这个容器就会退出。用docker ps查看不到。
+
+### 4.1.1 让容器长期运行
+
+容器的周期取决于依赖于启动时执行的命令，只要该命令不结束，容器也就不会退出。可以这么做：
+
+```shell
+docker run -d --name test-ubuntu ubuntu /bin/bash -c "while true;do sleep 1;done"
+```
+
+while循环可以让bash不退出，这样容器也就会一直运行下去。
+
+### 4.1.2 两种进入容器的方法
+
+1. docker attach + 容器ID
+2. `docker exec -it <container> bash|sh`
+   - -it 以交互模式打开pseudo-TTY，执行bash
+
+attach和exec的区别：
+
+1. attach直接进入容器启动命令的终端，不会启动新的进程。
+2. exec则是在容器中打开新的终端，并可以启动新的进程。
+3. 如果想要直接在终端中查看启动命令的输出，就用attach，其他用exec。
+4. 还可以用docker log -f + ID，查看启动命令的输出。-f 的作用和tail -f 相似。
+
+### 
+
+## 4.2  stop/start/restart容器
+
+1. docker start 会保留容器的第一次启动时的所有参数
+2. docker restart 可以重启容器，相当于依次执行docker stop，docker start。
+3. 为了防止容器遇到错误而停止，可以在启动时指定--restart参数为always，让容器不管因为何种原因退出，总会重启。
 
 
 
+## 4.3 pause/unpause容器
 
-​		
+有时候，需要对容器的文件系统做个快照，或者docker host需要使用更多cpu资源，这时就需要暂停容器，执行docker pause，恢复时使用docker unpause命令。
+
+
+
+## 4.4 删除容器
+
+- `docker rm + 容器ID`命令可以删除容器
+- 批量删除已退出的容器`docker rm -v $(docker ps -aq -f status=exited)`
+- 如果要删除镜像，使用`docker rmi`命令
+
+
+
+## 4.5  docker容器的状态
+
+- docker create创建容器，容器处于created状态
+- docker start将以后台模式启动容器
+- docker run启动容器的效果就相当于docker create和docker start的结合
+- 只有当容器的启动进程退出时，--restart才会生效
+
+
+
+## 4.6  资源限制
+
+### 4.6.1 内存限制
+
+- -m或--memory参数设置内存的使用限额，如100M，2GB
+
+- --memory-swap：设定内存+swap的使用限额。
+
+  `docker run -d -name ubuntu-docker -m 500M --memory-swap 3600M ubuntu` 
+
+  这个命令指：该容器最多使用500M内存和100M的虚拟内存，默认上两个参数的值时-1，即内存使用不限制。
+
+### 4.6.2 CPU限制
+
+默认情况下，容器可以平等地使用docker host的cpu资源。Docker可以通过使用-c或--cpu-shares来设置容器使用cpu的权重，如果不指定，默认值为1024。 如果两个docker容器分别把--cpu-shares的值设为1024和512，那么第一个容器消耗cpu资源是第二个容器的2倍。
+
+
+
+# 5 Docker网络
+
+docker安装时会在host上创建3个网络，分别是bridge，host和none，可以通过`docker network ls`查看。
+
+![image-20200626203817149](docker.assets/image-20200626203817149.png)
+
+## 5.1 none网络
+
+none网络就是没有网络，只有lo这个回环网络。
+
+## 5.2 host网络
+
+可以通过--network=host来指定，容器的网络配置与host完全一样。它的性能最好。传输效率很高，但是要考虑到端口不能和host冲突。
+
+## 5.3 bridge网络
+
+docker安装时会创建一个名为docker0的linux bridge，如果不指定--network，创建的容器都会默认挂到docker0上。
+
+## 5.4 user-defined网络
+
+用户可以根据自己的业务需求，自定义网络。
+
+Docker提供了三种网络驱动：bridge，overlay和macvlan。overlay和macvlan用于创建跨主机的网络。
+
+例子：
+
+```shell
+docker network create --driver bridge my_net1
+# --driver 后面的参数指定驱动类型，my_net1是名称
+```
+
+还可以自定义网段：
+
+```shell
+docker network create --driver bridge --subnet 172.22.16.0/24 --gateway 172.22.16.1 my_net2
+```
+
