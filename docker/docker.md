@@ -465,16 +465,33 @@ docker安装时会创建一个名为docker0的linux bridge，如果不指定--ne
 
 Docker提供了三种网络驱动：bridge，overlay和macvlan。overlay和macvlan用于创建跨主机的网络。
 
-例子：
+- 例子：
 
 ```shell
 docker network create --driver bridge my_net1
 # --driver 后面的参数指定驱动类型，my_net1是名称
 ```
 
-还可以自定义网段：
+- 还可以自定义网段：
 
 ```shell
 docker network create --driver bridge --subnet 172.22.16.0/24 --gateway 172.22.16.1 my_net2
 ```
 
+- 可以通过如下命令查看网络配置信息：
+
+![image-20200626205259476](docker.assets/image-20200626205259476.png)
+
+- 容器要使用创建的网络，可以通过--network指定：
+
+  ![image-20200626205454273](docker.assets/image-20200626205454273.png)
+
+  通过看容器的IP地址，可以看到，网卡已经被挂载到my_net的网桥上了。
+
+- 还可以指定容器的ip地址
+
+  ![image-20200626205757792](docker.assets/image-20200626205757792.png)
+
+- 注意：
+  - 只有通过--subnet创建的网络，才可以指定IP地址
+  - 两个挂载在同一个网桥上的容器可以互相通信
